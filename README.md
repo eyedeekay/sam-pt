@@ -1,2 +1,3 @@
 # sam-pt
-You don't even want to know.
+
+It's a Tor pluggable transport over I2P's SAM API because YOLO.
