@@ -1,13 +1,17 @@
 package samptc
 
 import (
+	"fmt"
+	"net"
+	"os"
+
 	"git.torproject.org/pluggable-transports/goptlib.git"
 	"github.com/eyedeekay/goSam"
-	"net"
 )
 
 type SAMClientPlug struct {
 	*goSam.Client
+	ptInfo      pt.ClientInfo
 	destination string
 }
 
@@ -56,12 +60,31 @@ func (s *SAMClientPlug) AcceptLoop(ln *pt.SocksListener) error {
 	return nil
 }
 
-func NewSAMClientPlug() (*SAMClientPlug, error) {
-	var s SAMClientPlug
+func (s *SAMClientPlug) Run() {
 	var err error
-	s.Client, err = goSam.NewDefaultClient()
+	s.ptInfo, err = pt.ClientSetup(nil)
 	if err != nil {
-		return nil, err
+		os.Exit(1)
 	}
-	return &s, nil
+	if s.ptInfo.ProxyURL != nil {
+		// you need to interpret the proxy URL yourself
+		// call pt.ProxyDone instead if it's a type you understand
+		pt.ProxyError(fmt.Sprintf("proxy %s is not supported", s.ptInfo.ProxyURL))
+		os.Exit(1)
+	}
+	for _, methodName := range s.ptInfo.MethodNames {
+		switch methodName {
+		case "samclient":
+			ln, err := pt.ListenSocks("tcp", "127.0.0.1:0")
+			if err != nil {
+				pt.CmethodError(methodName, err.Error())
+				break
+			}
+			go s.AcceptLoop(ln)
+			pt.Cmethod(methodName, ln.Version(), ln.Addr())
+		default:
+			pt.CmethodError(methodName, "no such method")
+		}
+	}
+	pt.CmethodsDone()
 }

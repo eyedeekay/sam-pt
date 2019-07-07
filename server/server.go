@@ -1,15 +1,15 @@
 package sampts
 
 import (
+	"net"
+
 	"git.torproject.org/pluggable-transports/goptlib.git"
 	"github.com/eyedeekay/goSam"
-	"net"
 )
 
 type SAMServerPlug struct {
 	*goSam.Client
-	destination string
-	ptInfo      pt.ServerInfo
+	ptInfo pt.ServerInfo
 }
 
 func (s *SAMServerPlug) NetworkListener() net.Listener {
@@ -49,5 +49,30 @@ func (s *SAMServerPlug) AcceptLoop(ln net.Listener) error {
 		}
 		go s.Handler(conn)
 	}
+	return nil
+}
+
+func (s *SAMServerPlug) Run() error {
+	var err error
+	s.ptInfo, err = pt.ServerSetup(nil)
+	if err != nil {
+		//		os.Exit(1)
+		return err
+	}
+	for _, bindaddr := range s.ptInfo.Bindaddrs {
+		switch bindaddr.MethodName {
+		case "samserver":
+			ln, err := net.ListenTCP("tcp", bindaddr.Addr)
+			if err != nil {
+				pt.SmethodError(bindaddr.MethodName, err.Error())
+				break
+			}
+			go s.AcceptLoop(ln)
+			pt.Smethod(bindaddr.MethodName, ln.Addr())
+		default:
+			pt.SmethodError(bindaddr.MethodName, "no such method")
+		}
+	}
+	pt.SmethodsDone()
 	return nil
 }

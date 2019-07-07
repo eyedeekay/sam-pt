@@ -1,6 +1,9 @@
 
 all: clean build
 
+run:
+	./runserver.sh
+
 build: samclient samserver
 
 samclient:
