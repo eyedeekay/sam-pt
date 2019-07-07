@@ -3,7 +3,6 @@ package samptc
 import (
 	"fmt"
 	"net"
-	"os"
 
 	"git.torproject.org/pluggable-transports/goptlib.git"
 	"github.com/eyedeekay/goSam"
@@ -60,17 +59,17 @@ func (s *SAMClientPlug) AcceptLoop(ln *pt.SocksListener) error {
 	return nil
 }
 
-func (s *SAMClientPlug) Run() {
+func (s *SAMClientPlug) Run() error {
 	var err error
 	s.ptInfo, err = pt.ClientSetup(nil)
 	if err != nil {
-		os.Exit(1)
+		return err
 	}
 	if s.ptInfo.ProxyURL != nil {
 		// you need to interpret the proxy URL yourself
 		// call pt.ProxyDone instead if it's a type you understand
 		pt.ProxyError(fmt.Sprintf("proxy %s is not supported", s.ptInfo.ProxyURL))
-		os.Exit(1)
+		return fmt.Errorf("proxy %s is not supported", s.ptInfo.ProxyURL)
 	}
 	for _, methodName := range s.ptInfo.MethodNames {
 		switch methodName {
@@ -87,4 +86,5 @@ func (s *SAMClientPlug) Run() {
 		}
 	}
 	pt.CmethodsDone()
+	return nil
 }
