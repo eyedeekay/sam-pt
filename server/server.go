@@ -1,7 +1,9 @@
 package sampts
 
 import (
+	"io"
 	"net"
+	"sync"
 
 	"git.torproject.org/pluggable-transports/goptlib.git"
 	"github.com/eyedeekay/goSam"
@@ -9,7 +11,8 @@ import (
 
 type SAMServerPlug struct {
 	*goSam.Client
-	ptInfo pt.ServerInfo
+	PtInfo    pt.ServerInfo
+	LocalDest string // this must be a full base64 private key
 }
 
 func (s *SAMServerPlug) NetworkListener() net.Listener {
@@ -25,14 +28,31 @@ func (s *SAMServerPlug) Close() error {
 	return s.Close()
 }
 
+func (s *SAMServerPlug) CopyLoop(or net.Conn) {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		io.Copy(or, s.Client)
+		wg.Done()
+	}()
+	go func() {
+		io.Copy(s.Client, or)
+		wg.Done()
+	}()
+
+	wg.Wait()
+}
+
 func (s *SAMServerPlug) Handler(conn net.Conn) error {
 	defer conn.Close()
-	or, err := pt.DialOr(&s.ptInfo, conn.RemoteAddr().String(), "foo")
+	or, err := pt.DialOr(&s.PtInfo, conn.RemoteAddr().String(), "foo")
 	if err != nil {
 		return err
 	}
 	defer or.Close()
 	// do something with or and conn
+	s.CopyLoop(or)
 	return nil
 }
 
@@ -54,15 +74,15 @@ func (s *SAMServerPlug) AcceptLoop(ln net.Listener) error {
 
 func (s *SAMServerPlug) Run() error {
 	var err error
-	s.ptInfo, err = pt.ServerSetup(nil)
+	s.PtInfo, err = pt.ServerSetup(nil)
 	if err != nil {
 		//		os.Exit(1)
 		return err
 	}
-	for _, bindaddr := range s.ptInfo.Bindaddrs {
+	for _, bindaddr := range s.PtInfo.Bindaddrs {
 		switch bindaddr.MethodName {
 		case "samserver":
-			ln, err := net.ListenTCP("tcp", bindaddr.Addr)
+			ln, err := s.Client.ListenI2P(s.LocalDest)
 			if err != nil {
 				pt.SmethodError(bindaddr.MethodName, err.Error())
 				break

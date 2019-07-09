@@ -2,7 +2,9 @@ package samptc
 
 import (
 	"fmt"
+	"io"
 	"net"
+	"sync"
 
 	"git.torproject.org/pluggable-transports/goptlib.git"
 	"github.com/eyedeekay/goSam"
@@ -27,6 +29,22 @@ func (s *SAMClientPlug) Close() error {
 	return s.Close()
 }
 
+func (s *SAMClientPlug) CopyLoop(or net.Conn) {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		io.Copy(or, s.Client)
+		wg.Done()
+	}()
+	go func() {
+		io.Copy(s.Client, or)
+		wg.Done()
+	}()
+
+	wg.Wait()
+}
+
 func (s *SAMClientPlug) Handler(conn *pt.SocksConn) error {
 	defer conn.Close()
 	remote, err := s.Client.Dial("i2p", s.destination) //conn.Req.Target)
@@ -35,11 +53,12 @@ func (s *SAMClientPlug) Handler(conn *pt.SocksConn) error {
 		return err
 	}
 	defer remote.Close()
-	err = conn.Grant(remote.RemoteAddr().(*net.TCPAddr))
+	err = conn.Grant(nil)
 	if err != nil {
 		return err
 	}
 	// do something with conn and remote.
+	s.CopyLoop(conn)
 	return nil
 }
 
