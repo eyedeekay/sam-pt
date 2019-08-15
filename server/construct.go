@@ -1,8 +1,12 @@
 package sampts
 
 import (
+	"os"
+)
+
+import (
 	"github.com/eyedeekay/sam3"
-	//	"github.com/eyedeekay/sam3/i2pkeys"
+	"github.com/eyedeekay/sam3/i2pkeys"
 )
 
 var Options_Short = []string{"inbound.length=1", "outbound.length=1",
@@ -13,28 +17,33 @@ var Options_Short = []string{"inbound.length=1", "outbound.length=1",
 func NewSAMServerPlug() (*SAMServerPlug, error) {
 	var s SAMServerPlug
 	var err error
-	s.keys, err = s.sam.NewKeys()
-	if err != nil {
-		return nil, err
-	}
 	s.sam, err = sam3.NewSAM("127.0.0.1:7656")
 	if err != nil {
 		return nil, err
 	}
-	s.Session, err = s.sam.NewStreamSession("sam-pt", s.keys, Options_Short)
+	if s.KeysPath == "" {
+		s.Keys, err = s.sam.NewKeys()
+		if err != nil {
+			return nil, err
+		}
+	} else if _, err := os.Stat(s.KeysPath); os.IsNotExist(err) {
+		s.Keys, err = s.sam.NewKeys()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		file, err := os.Open(s.KeysPath)
+		if err != nil {
+			return nil, err
+		}
+		s.Keys, err = i2pkeys.LoadKeysIncompat(file)
+		if err != nil {
+			return nil, err
+		}
+	}
+	s.Session, err = s.sam.NewStreamSession("sam-pt", s.Keys, Options_Short)
 	if err != nil {
 		return nil, err
 	}
 	return &s, nil
 }
-
-// NewSAMClientPlugFromOptions creates a new client, connecting to a specified port
-/*func NewSAMServerPlugFromOptions(opts ...func(*goSam.Client) error) (*SAMServerPlug, error) {
-	var c SAMServerPlug
-	for _, o := range opts {
-		if err := o(c.Client); err != nil {
-			return nil, err
-		}
-	}
-	return &c, nil
-}*/

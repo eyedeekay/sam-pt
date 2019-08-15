@@ -2,6 +2,8 @@ package sampts
 
 import (
 	"io"
+	"io/ioutil"
+	"log"
 	"net"
 	"sync"
 
@@ -12,12 +14,21 @@ import (
 
 type SAMServerPlug struct {
 	sam       *sam3.SAM
-	keys      i2pkeys.I2PKeys
+	KeysPath  string
+	Keys      i2pkeys.I2PKeys
 	Session   *sam3.StreamSession
 	Listener  *sam3.StreamListener
 	Client    *sam3.SAMConn
 	PtInfo    pt.ServerInfo
 	LocalDest string // this must be a full base64 private key
+}
+
+func (s *SAMServerPlug) TorRCClient() string {
+	return `UseBridges 1
+Bridge sam ` + s.Keys.Addr().Base64() + `
+
+ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base64() + `
+`
 }
 
 func (s *SAMServerPlug) NetworkListener() net.Listener {
@@ -66,7 +77,6 @@ func (s *SAMServerPlug) AcceptLoop(ln net.Listener) error {
 	var err error
 	s.Client, err = ln.(*sam3.StreamListener).AcceptI2P()
 	for {
-		//conn, err := ln.Accept()
 		if err != nil {
 			if e, ok := err.(net.Error); ok && e.Temporary() {
 				continue
@@ -81,11 +91,6 @@ func (s *SAMServerPlug) AcceptLoop(ln net.Listener) error {
 
 func (s *SAMServerPlug) Run() error {
 	var err error
-	s.PtInfo, err = pt.ServerSetup(nil)
-	if err != nil {
-		//		os.Exit(1)
-		return err
-	}
 	for _, bindaddr := range s.PtInfo.Bindaddrs {
 		switch bindaddr.MethodName {
 		case "samserver":
@@ -94,6 +99,12 @@ func (s *SAMServerPlug) Run() error {
 				pt.SmethodError(bindaddr.MethodName, err.Error())
 				break
 			}
+			log.Println(s.TorRCClient())
+			ioutil.WriteFile(
+				s.KeysPath,
+				[]byte(s.TorRCClient()),
+				0644,
+			)
 			go s.AcceptLoop(s.Listener)
 			pt.Smethod(bindaddr.MethodName, s.Listener.Addr())
 		default:

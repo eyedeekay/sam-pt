@@ -18,7 +18,7 @@ type SAMClientPlug struct {
 	Session     *sam3.StreamSession
 	Client      *sam3.SAMConn
 	PtInfo      pt.ClientInfo
-	destination string
+	Destination string
 }
 
 func (s *SAMClientPlug) NetworkListener() net.Listener {
@@ -78,11 +78,6 @@ func (s *SAMClientPlug) AcceptLoop(ln *pt.SocksListener) error {
 }
 
 func (s *SAMClientPlug) Run() error {
-	var err error
-	s.PtInfo, err = pt.ClientSetup(nil)
-	if err != nil {
-		return err
-	}
 	if s.PtInfo.ProxyURL != nil {
 		// you need to interpret the proxy URL yourself
 		// call pt.ProxyDone instead if it's a type you understand

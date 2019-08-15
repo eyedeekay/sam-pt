@@ -20,6 +20,7 @@ func AcceptLoop(ln *pt.SocksListener) error {
 
 func main() {
 	var err error
+	s.Destination = os.Args[1]
 	s, err = samptc.NewSAMClientPlug()
 	s.PtInfo, err = pt.ClientSetup(nil)
 	if err != nil {
