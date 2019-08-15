@@ -1,15 +1,30 @@
 package main
 
 import (
+	//	"net"
+	"os"
+
+	"git.torproject.org/pluggable-transports/goptlib.git"
 	"github.com/RTradeLtd/sam-pt/client"
 )
 
+var s *samptc.SAMClientPlug
+
+func Handler(conn *pt.SocksConn) error {
+	return s.Handler(conn)
+}
+
+func AcceptLoop(ln *pt.SocksListener) error {
+	return s.AcceptLoop(ln)
+}
+
 func main() {
-	if pt, err := samptc.NewSAMClientPlug(); err != nil {
-		panic(err)
-	} else {
-		if err := pt.Run(); err != nil {
-			panic(err)
-		}
+	var err error
+	s, err = samptc.NewSAMClientPlug()
+	s.PtInfo, err = pt.ClientSetup(nil)
+	if err != nil {
+		os.Exit(1)
 	}
+	s.Run()
+	pt.SmethodsDone()
 }

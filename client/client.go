@@ -7,17 +7,22 @@ import (
 	"sync"
 
 	"git.torproject.org/pluggable-transports/goptlib.git"
-	"github.com/eyedeekay/goSam"
+	"github.com/eyedeekay/sam3"
+	"github.com/eyedeekay/sam3/i2pkeys"
 )
 
 type SAMClientPlug struct {
-	*goSam.Client
-	ptInfo      pt.ClientInfo
+	sam         *sam3.SAM
+	keys        i2pkeys.I2PKeys
+	destaddr    i2pkeys.I2PAddr
+	Session     *sam3.StreamSession
+	Client      *sam3.SAMConn
+	PtInfo      pt.ClientInfo
 	destination string
 }
 
 func (s *SAMClientPlug) NetworkListener() net.Listener {
-	listener, _ := s.Listen()
+	listener, _ := s.Session.Listen()
 	return listener
 }
 
@@ -47,13 +52,7 @@ func (s *SAMClientPlug) CopyLoop(or net.Conn) {
 
 func (s *SAMClientPlug) Handler(conn *pt.SocksConn) error {
 	defer conn.Close()
-	remote, err := s.Client.Dial("i2p", s.destination) //conn.Req.Target)
-	if err != nil {
-		conn.Reject()
-		return err
-	}
-	defer remote.Close()
-	err = conn.Grant(nil)
+	err := conn.Grant(nil)
 	if err != nil {
 		return err
 	}
@@ -80,17 +79,17 @@ func (s *SAMClientPlug) AcceptLoop(ln *pt.SocksListener) error {
 
 func (s *SAMClientPlug) Run() error {
 	var err error
-	s.ptInfo, err = pt.ClientSetup(nil)
+	s.PtInfo, err = pt.ClientSetup(nil)
 	if err != nil {
 		return err
 	}
-	if s.ptInfo.ProxyURL != nil {
+	if s.PtInfo.ProxyURL != nil {
 		// you need to interpret the proxy URL yourself
 		// call pt.ProxyDone instead if it's a type you understand
-		pt.ProxyError(fmt.Sprintf("proxy %s is not supported", s.ptInfo.ProxyURL))
-		return fmt.Errorf("proxy %s is not supported", s.ptInfo.ProxyURL)
+		pt.ProxyError(fmt.Sprintf("proxy %s is not supported", s.PtInfo.ProxyURL))
+		return fmt.Errorf("proxy %s is not supported", s.PtInfo.ProxyURL)
 	}
-	for _, methodName := range s.ptInfo.MethodNames {
+	for _, methodName := range s.PtInfo.MethodNames {
 		switch methodName {
 		case "samclient":
 			ln, err := pt.ListenSocks("tcp", "127.0.0.1:0")

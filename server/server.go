@@ -6,17 +6,22 @@ import (
 	"sync"
 
 	"git.torproject.org/pluggable-transports/goptlib.git"
-	"github.com/eyedeekay/goSam"
+	"github.com/eyedeekay/sam3"
+	"github.com/eyedeekay/sam3/i2pkeys"
 )
 
 type SAMServerPlug struct {
-	*goSam.Client
+	sam       *sam3.SAM
+	keys      i2pkeys.I2PKeys
+	Session   *sam3.StreamSession
+	Listener  *sam3.StreamListener
+	Client    *sam3.SAMConn
 	PtInfo    pt.ServerInfo
 	LocalDest string // this must be a full base64 private key
 }
 
 func (s *SAMServerPlug) NetworkListener() net.Listener {
-	listener, _ := s.Listen()
+	listener, _ := s.Session.Listen()
 	return listener
 }
 
@@ -82,13 +87,13 @@ func (s *SAMServerPlug) Run() error {
 	for _, bindaddr := range s.PtInfo.Bindaddrs {
 		switch bindaddr.MethodName {
 		case "samserver":
-			ln, err := s.Client.ListenI2P(s.LocalDest)
+			s.Listener, err = s.Session.Listen()
 			if err != nil {
 				pt.SmethodError(bindaddr.MethodName, err.Error())
 				break
 			}
-			go s.AcceptLoop(ln)
-			pt.Smethod(bindaddr.MethodName, ln.Addr())
+			go s.AcceptLoop(s.Listener)
+			pt.Smethod(bindaddr.MethodName, s.Listener.Addr())
 		default:
 			pt.SmethodError(bindaddr.MethodName, "no such method")
 		}
