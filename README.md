@@ -22,6 +22,6 @@ To set up a server, add the following to your torrc
         ORPort 9001
         ExtORPort 9002
 
-        ServerTransportPlugin sam exec /usr/bin/samserver
+        ServerTransportPlugin sam exec /usr/bin/samserver <optional path to client torrc fragment>
         ServerTransportListenAddr sam
 
