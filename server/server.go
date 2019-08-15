@@ -5,9 +5,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"strings"
 	"sync"
 
 	"git.torproject.org/pluggable-transports/goptlib.git"
+	"github.com/eyedeekay/sam-forwarder/hashhash"
 	"github.com/eyedeekay/sam3"
 	"github.com/eyedeekay/sam3/i2pkeys"
 )
@@ -24,8 +26,25 @@ type SAMServerPlug struct {
 }
 
 func (s *SAMServerPlug) TorRCClient() string {
-	return `UseBridges 1
+	return `
+## Conflgure a client by adding these lines to your torrc
+
+UseBridges 1
 Bridge sam ` + s.Keys.Addr().Base64() + `
+
+ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base64() + `
+
+## OR you can use the base32
+
+UseBridges 1
+Bridge sam ` + s.Keys.Addr().Base32() + `
+
+ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base64() + `
+
+## OR you can use a readable mnemonic
+
+UseBridges 1
+Bridge sam ` + s.Mnemonic() + `
 
 ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base64() + `
 `
@@ -87,6 +106,16 @@ func (s *SAMServerPlug) AcceptLoop(ln net.Listener) error {
 		go s.Handler(s.Client)
 	}
 	return nil
+}
+
+func (s *SAMServerPlug) Mnemonic() string {
+	b32 := strings.Replace(s.Keys.Addr().Base32(), ".b32.i2p", "", 1)
+	Hasher, err := hashhash.NewHasher(len(b32))
+	if err != nil {
+		return s.Keys.Addr().Base32()
+	}
+	hash, _ := Hasher.Friendly(b32)
+	return hash
 }
 
 func (s *SAMServerPlug) Run() error {
