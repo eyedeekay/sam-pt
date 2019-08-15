@@ -31,6 +31,11 @@ func NewSAMServerPlug() (*SAMServerPlug, error) {
 		if err != nil {
 			return nil, err
 		}
+		file, err := os.Create(s.KeysPath)
+		if err != nil {
+			return nil, err
+		}
+		err = i2pkeys.StoreKeysIncompat(s.Keys, file)
 	} else {
 		file, err := os.Open(s.KeysPath)
 		if err != nil {

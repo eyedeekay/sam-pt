@@ -1,10 +1,12 @@
 package samptc
 
 import (
+	"strconv"
 	"strings"
 )
 
 import (
+	"github.com/eyedeekay/sam-forwarder/hashhash"
 	"github.com/eyedeekay/sam3"
 	"github.com/eyedeekay/sam3/i2pkeys"
 )
@@ -31,7 +33,27 @@ func NewSAMClientPlug() (*SAMClientPlug, error) {
 	}
 	if strings.HasSuffix(s.Destination, ".i2p") {
 		s.destaddr, err = s.sam.Lookup(s.Destination)
-		//} strings.Split(s.Destination, " ") > 30 {
+	} else if slice := strings.Split(s.Destination, " "); len(slice) > 30 {
+		if length, err := strconv.Atoi(slice[len(slice)-1]); err == nil {
+			Hasher, err := hashhash.NewHasher(length)
+			if err != nil {
+				return nil, err
+			}
+			s.Destination, err = Hasher.Unfriendlyslice(slice[0 : len(slice)-2])
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			Hasher, err := hashhash.NewHasher(52)
+			if err != nil {
+				return nil, err
+			}
+			s.Destination, err = Hasher.Unfriendlyslice(slice)
+			if err != nil {
+				return nil, err
+			}
+		}
+		s.destaddr, err = s.sam.Lookup(s.Destination)
 	} else {
 		s.destaddr, err = i2pkeys.NewI2PAddrFromString(s.Destination)
 	}

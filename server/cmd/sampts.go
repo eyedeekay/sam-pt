@@ -20,11 +20,11 @@ func AcceptLoop(ln net.Listener) error {
 
 func main() {
 	var err error
-    if len(os.Args) > 1 {
-        s.KeysPath = os.Args[1]
-    )else{
-        s.KeysPath = "sam.torrc"
-    }
+	if len(os.Args) > 1 {
+		s.KeysPath = os.Args[1]
+	} else {
+		s.KeysPath = "sam.torrc"
+	}
 	s, err = sampts.NewSAMServerPlug()
 	s.PtInfo, err = pt.ServerSetup(nil)
 	if err != nil {
