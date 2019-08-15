@@ -22,11 +22,9 @@ func NewSAMServerPlug() (*SAMServerPlug, error) {
 		return nil, err
 	}
 	if s.KeysPath == "" {
-		s.Keys, err = s.sam.NewKeys()
-		if err != nil {
-			return nil, err
-		}
-	} else if _, err := os.Stat(s.KeysPath); os.IsNotExist(err) {
+		s.KeysPath = "sam.torrc.i2pkeys"
+	}
+	if _, err := os.Stat(s.KeysPath); os.IsNotExist(err) {
 		s.Keys, err = s.sam.NewKeys()
 		if err != nil {
 			return nil, err

@@ -15,14 +15,15 @@ import (
 )
 
 type SAMServerPlug struct {
-	sam       *sam3.SAM
-	KeysPath  string
-	Keys      i2pkeys.I2PKeys
-	Session   *sam3.StreamSession
-	Listener  *sam3.StreamListener
-	Client    *sam3.SAMConn
-	PtInfo    pt.ServerInfo
-	LocalDest string // this must be a full base64 private key
+	sam        *sam3.SAM
+	KeysPath   string
+	ClientPath string
+	Keys       i2pkeys.I2PKeys
+	Session    *sam3.StreamSession
+	Listener   *sam3.StreamListener
+	Client     *sam3.SAMConn
+	PtInfo     pt.ServerInfo
+	LocalDest  string // this must be a full base64 private key
 }
 
 func (s *SAMServerPlug) TorRCClient() string {
@@ -39,14 +40,14 @@ ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base64() + `
 UseBridges 1
 Bridge sam ` + s.Keys.Addr().Base32() + `
 
-ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base64() + `
+ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base32() + `
 
 ## OR you can use a readable mnemonic
 
 UseBridges 1
 Bridge sam ` + s.Mnemonic() + `
 
-ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base64() + `
+ClientTransportPlugin sam exec /usr/bin/samclient "` + s.Mnemonic() + `"
 `
 }
 
@@ -130,7 +131,7 @@ func (s *SAMServerPlug) Run() error {
 			}
 			log.Println(s.TorRCClient())
 			ioutil.WriteFile(
-				s.KeysPath,
+				s.ClientPath,
 				[]byte(s.TorRCClient()),
 				0644,
 			)

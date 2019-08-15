@@ -21,18 +21,21 @@ func AcceptLoop(ln net.Listener) error {
 func main() {
 	var err error
 	var KeysPath string
+	var ClientPath string
 	if len(os.Args) > 1 {
-		KeysPath = os.Args[1]
+		ClientPath = os.Args[1]
 	}
-	if KeysPath == "" {
-		KeysPath = "sam.torrc"
+	if ClientPath == "" {
+		ClientPath = "sam.torrc"
 	}
+	KeysPath = "sam.torrc.i2pkeys"
 	s, err = sampts.NewSAMServerPlug()
 	s.PtInfo, err = pt.ServerSetup(nil)
 	if err != nil {
 		os.Exit(1)
 	}
 	s.KeysPath = KeysPath
+	s.ClientPath = ClientPath
 	s.Run()
 	pt.SmethodsDone()
 }
