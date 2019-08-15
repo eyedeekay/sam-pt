@@ -40,14 +40,14 @@ ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base64() + `
 UseBridges 1
 Bridge sam ` + s.Keys.Addr().Base32() + `
 
-ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base32() + " " + strconv.Itoa(len(s.Mnemonic())) + `
+ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base32() + `
 
 ## OR you can use a readable mnemonic
 
 UseBridges 1
-Bridge sam "` + s.Mnemonic() + `"
+Bridge sam "` + s.Mnemonic() + " " + strconv.Itoa(len(strings.Replace(s.Keys.Addr().Base32(), ".b32.i2p", "", 1))) + `"
 
-ClientTransportPlugin sam exec /usr/bin/samclient "` + s.Mnemonic() + " " + strconv.Itoa(len(s.Mnemonic())) + `"
+ClientTransportPlugin sam exec /usr/bin/samclient "` + s.Mnemonic() + " " + strconv.Itoa(len(strings.Replace(s.Keys.Addr().Base32(), ".b32.i2p", "", 1))) + `"
 `
 }
 
