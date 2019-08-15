@@ -25,14 +25,6 @@ func NewSAMServerPlug() (*SAMServerPlug, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.Listener, err = s.Session.Listen()
-	if err != nil {
-		return nil, err
-	}
-	s.Client, err = s.Listener.AcceptI2P()
-	if err != nil {
-		return nil, err
-	}
 	return &s, nil
 }
 

@@ -63,8 +63,10 @@ func (s *SAMServerPlug) Handler(conn net.Conn) error {
 
 func (s *SAMServerPlug) AcceptLoop(ln net.Listener) error {
 	defer ln.Close()
+	var err error
+	s.Client, err = ln.(*sam3.StreamListener).AcceptI2P()
 	for {
-		conn, err := ln.Accept()
+		//conn, err := ln.Accept()
 		if err != nil {
 			if e, ok := err.(net.Error); ok && e.Temporary() {
 				continue
@@ -72,7 +74,7 @@ func (s *SAMServerPlug) AcceptLoop(ln net.Listener) error {
 			pt.Log(pt.LogSeverityError, "accept error: "+err.Error())
 			return err
 		}
-		go s.Handler(conn)
+		go s.Handler(s.Client)
 	}
 	return nil
 }
