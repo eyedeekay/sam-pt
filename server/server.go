@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -23,7 +24,6 @@ type SAMServerPlug struct {
 	Listener   *sam3.StreamListener
 	Client     *sam3.SAMConn
 	PtInfo     pt.ServerInfo
-	LocalDest  string // this must be a full base64 private key
 }
 
 func (s *SAMServerPlug) TorRCClient() string {
@@ -40,14 +40,14 @@ ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base64() + `
 UseBridges 1
 Bridge sam ` + s.Keys.Addr().Base32() + `
 
-ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base32() + `
+ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base32() + " " + strconv.Itoa(len(s.Mnemonic())) + `
 
 ## OR you can use a readable mnemonic
 
 UseBridges 1
-Bridge sam ` + s.Mnemonic() + `
+Bridge sam "` + s.Mnemonic() + `"
 
-ClientTransportPlugin sam exec /usr/bin/samclient "` + s.Mnemonic() + `"
+ClientTransportPlugin sam exec /usr/bin/samclient "` + s.Mnemonic() + " " + strconv.Itoa(len(s.Mnemonic())) + `"
 `
 }
 
