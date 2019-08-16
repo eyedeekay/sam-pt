@@ -2,6 +2,7 @@ package main
 
 import (
 	//	"net"
+	"flag"
 	"os"
 
 	"git.torproject.org/pluggable-transports/goptlib.git"
@@ -10,18 +11,22 @@ import (
 
 var s *samptc.SAMClientPlug
 
-func Handler(conn *pt.SocksConn) error {
-	return s.Handler(conn)
-}
-
-func AcceptLoop(ln *pt.SocksListener) error {
-	return s.AcceptLoop(ln)
-}
+var (
+	Destination = flag.String("dest", "", "")
+)
 
 func main() {
 	var err error
-	s.Destination = os.Args[1]
+	flag.Parse()
+	pt.Log(pt.LogSeverityNotice, "Starting samclient")
 	s, err = samptc.NewSAMClientPlug()
+	if err != nil {
+		pt.Log(pt.LogSeverityNotice, err.Error())
+		os.Exit(1)
+	} else {
+		pt.Log(pt.LogSeverityNotice, "samclient ready")
+	}
+	s.Destination = *Destination
 	s.PtInfo, err = pt.ClientSetup(nil)
 	if err != nil {
 		os.Exit(1)
