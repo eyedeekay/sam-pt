@@ -31,24 +31,15 @@ func (s *SAMServerPlug) TorRCClient() string {
 	return `
 ## Conflgure a client by adding these lines to your torrc
 
-UseBridges 1
-Bridge sam ` + s.Keys.Addr().Base64() + `
-
-ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base64() + `
+ClientTransportPlugin sam exec /usr/bin/samclient -destination=` + s.Keys.Addr().Base64() + `
 
 ## OR you can use the base32
 
-UseBridges 1
-Bridge sam ` + s.Keys.Addr().Base32() + `
-
-ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base32() + `
+ClientTransportPlugin sam exec /usr/bin/samclient -destination=` + s.Keys.Addr().Base32() + `
 
 ## OR you can use a readable mnemonic
 
-UseBridges 1
-Bridge sam "` + s.Mnemonic() + " " + strconv.Itoa(len(strings.Replace(s.Keys.Addr().Base32(), ".b32.i2p", "", 1))) + `"
-
-ClientTransportPlugin sam exec /usr/bin/samclient "` + s.Mnemonic() + " " + strconv.Itoa(len(strings.Replace(s.Keys.Addr().Base32(), ".b32.i2p", "", 1))) + `"
+ClientTransportPlugin sam exec /usr/bin/samclient -destination="` + s.Mnemonic() + " " + strconv.Itoa(len(strings.Replace(s.Keys.Addr().Base32(), ".b32.i2p", "", 1))) + `"
 `
 }
 

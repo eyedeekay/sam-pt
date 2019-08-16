@@ -1,11 +1,13 @@
 package samptc
 
 import (
+	"log"
 	"strconv"
 	"strings"
 )
 
 import (
+	"git.torproject.org/pluggable-transports/goptlib.git"
 	"github.com/eyedeekay/sam-forwarder/hashhash"
 	"github.com/eyedeekay/sam3"
 	"github.com/eyedeekay/sam3/i2pkeys"
@@ -20,50 +22,67 @@ func NewSAMClientPlug(Destination string) (*SAMClientPlug, error) {
 	var s SAMClientPlug
 	var err error
 	s.Destination = Destination
-	s.keys, err = s.sam.NewKeys()
-	if err != nil {
-		return nil, err
-	}
 	s.sam, err = sam3.NewSAM("127.0.0.1:7656")
 	if err != nil {
 		return nil, err
 	}
+	log.Println("samclient: SAM connected")
+	s.keys, err = s.sam.NewKeys()
+	if err != nil {
+		return nil, err
+	}
+	log.Println("samclient: Keys generated")
 	s.Session, err = s.sam.NewStreamSession("sam-pt", s.keys, Options_Short)
 	if err != nil {
 		return nil, err
 	}
+	log.Println("samclient: Session started")
 	if strings.HasSuffix(s.Destination, ".i2p") {
 		s.destaddr, err = s.sam.Lookup(s.Destination)
+		if err != nil {
+			return nil, err
+		}
+		log.Println("samclient: Looked up destination")
 	} else if slice := strings.Split(s.Destination, " "); len(slice) > 30 {
 		if length, err := strconv.Atoi(slice[len(slice)-1]); err == nil {
 			Hasher, err := hashhash.NewHasher(length)
 			if err != nil {
 				return nil, err
 			}
+			log.Println("samclient: Created hash decoder")
 			s.Destination, err = Hasher.Unfriendlyslice(slice[0 : len(slice)-2])
 			if err != nil {
 				return nil, err
 			}
+			log.Println("samclient: decoded hash")
 		} else {
 			Hasher, err := hashhash.NewHasher(52)
 			if err != nil {
 				return nil, err
 			}
+			log.Println("samclient: created hash decoder")
 			s.Destination, err = Hasher.Unfriendlyslice(slice)
 			if err != nil {
 				return nil, err
 			}
+			log.Println("samclient: decoded hash")
 		}
 		s.destaddr, err = s.sam.Lookup(s.Destination)
+		if err != nil {
+			return nil, err
+		}
+		log.Println("samclient: Looked up destination")
 	} else {
 		s.destaddr, err = i2pkeys.NewI2PAddrFromString(s.Destination)
+		if err != nil {
+			return nil, err
+		}
+		log.Println("samclient: created address")
 	}
+	s.PtInfo, err = pt.ClientSetup(nil)
 	if err != nil {
 		return nil, err
 	}
-	s.Client, err = s.Session.DialI2P(s.destaddr)
-	if err != nil {
-		return nil, err
-	}
+	log.Println("samclient: set up client")
 	return &s, nil
 }
