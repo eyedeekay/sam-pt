@@ -94,7 +94,7 @@ func (s *SAMClientPlug) Run() error {
 	}
 	for _, methodName := range s.PtInfo.MethodNames {
 		switch methodName {
-		case "samclient":
+		case "sam":
 			ln, err := pt.ListenSocks("tcp", "127.0.0.1:0")
 			if err != nil {
 				pt.CmethodError(methodName, err.Error())

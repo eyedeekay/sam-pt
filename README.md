@@ -13,12 +13,13 @@ Server Configuration
 
 To set up a server, add the following to your torrc
 
-        BridgeRelay 1
+        SocksPort 0
         ORPort 9001
-        ExtORPort 9002
+        ExtORPort auto
+        BridgeRelay 1
 
         ServerTransportPlugin sam exec /var/lib/tor/samserver -client-config <path to torrc fragment for sharing with clients> -i2p-keys <path to i2p service key storage>
-        ServerTransportListenAddr sam sam-0.0.0.0:1231
+        ServerTransportListenAddr sam 0.0.0.0:1231
 
 When you start the service, it will create a file in either the "Optional Path"
 you specify in the torrc or in whatever the working directory is where the
