@@ -18,13 +18,10 @@ var (
 func main() {
 	var err error
 	flag.Parse()
-	pt.Log(pt.LogSeverityNotice, "Starting samclient")
-	s, err = samptc.NewSAMClientPlug()
+	s, err = samptc.NewSAMClientPlug(*Destination)
 	if err != nil {
-		pt.Log(pt.LogSeverityNotice, err.Error())
+		log.Println("samclient: Client error")
 		os.Exit(1)
-	} else {
-		pt.Log(pt.LogSeverityNotice, "samclient ready")
 	}
 	s.Destination = *Destination
 	s.PtInfo, err = pt.ClientSetup(nil)
