@@ -3,6 +3,7 @@ package main
 import (
 	//	"net"
 	"flag"
+	"log"
 	"os"
 
 	"git.torproject.org/pluggable-transports/goptlib.git"

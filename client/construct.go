@@ -16,9 +16,10 @@ var Options_Short = []string{"inbound.length=1", "outbound.length=1",
 	"inbound.backupQuantity=1", "outbound.backupQuantity=1",
 	"inbound.quantity=2", "outbound.quantity=2"}
 
-func NewSAMClientPlug() (*SAMClientPlug, error) {
+func NewSAMClientPlug(Destination string) (*SAMClientPlug, error) {
 	var s SAMClientPlug
 	var err error
+	s.Destination = Destination
 	s.keys, err = s.sam.NewKeys()
 	if err != nil {
 		return nil, err

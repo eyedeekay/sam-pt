@@ -108,7 +108,7 @@ func (s *SAMServerPlug) AcceptLoop(ln net.Listener) error {
 			if e, ok := err.(net.Error); ok && e.Temporary() {
 				continue
 			}
-			log.Println("accept error: " + err.Error())
+			pt.Log(pt.LogSeverityError, "accept error: "+err.Error())
 			return err
 		}
 		go s.Handler(acc)
