@@ -1,31 +1,29 @@
 package main
 
 import (
-	//	"net"
+	"flag"
+	"log"
 	"os"
 
-	"git.torproject.org/pluggable-transports/goptlib.git"
 	"github.com/RTradeLtd/sam-pt/client"
 )
 
 var s *samptc.SAMClientPlug
 
-func Handler(conn *pt.SocksConn) error {
-	return s.Handler(conn)
-}
-
-func AcceptLoop(ln *pt.SocksListener) error {
-	return s.AcceptLoop(ln)
-}
+var (
+	Destination = flag.String("destination", "fZAVcqVFgdsalFlDG52ItFwOblIyddiENrrKJ4Fx46qC2AyKJbId9P2l3g-RCUzaWVUge~WEyxb5IqfHt9P8HKvG6cXnUK2sCjlEl-hgbVnyNZVoQzoFD7g8CGtcjIdjXtJby2QYenOdv-Q3uuu44MEVGe4rnzteg85nhUvJ5jPIDZHIj4s5kp4hs0l9KQ~SCpPG4fCBKQCsup26tBOpdk8EwIKJ8nNeeLHTh~ACEbbja0BMWnow8BY3siB936-TTCo~F37SMPP4-H18UPnzAQHThX1yeb9kjsD6EExVJqmeuXmh0ciRDdTredm3wC4ftKDvUqVa4jA8C8WXKqwNKYFErcR2eAhAyLPk66uetVL6IJFci9KM1XzxyO6Dlb7RouTh8WFkKg0TT6NmFjRhQNh9NVruv2oJCpoBNG2krp0tvurAKXQUC-BtA8JR-V880IObwRgYMSStfPTxTrnCBazc6~kQNYJWxQaATHWYQCfExIKkne~02k05kVTWPB0WAAAA", "An i2p address to use as a Tor Bridge")
+)
 
 func main() {
 	var err error
-	s.Destination = os.Args[1]
-	s, err = samptc.NewSAMClientPlug()
-	s.PtInfo, err = pt.ClientSetup(nil)
+	flag.Parse()
+	s, err = samptc.NewSAMClientPlug(*Destination)
 	if err != nil {
+		log.Println("samclient: Client error")
 		os.Exit(1)
 	}
-	s.Run()
-	pt.SmethodsDone()
+	log.Println("samclient: Client starting")
+	if err = s.Run(); err != nil {
+		os.Exit(1)
+	}
 }

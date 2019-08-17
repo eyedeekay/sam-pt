@@ -8,7 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
+)
+import (
 	"git.torproject.org/pluggable-transports/goptlib.git"
 	"github.com/eyedeekay/sam-forwarder/hashhash"
 	"github.com/eyedeekay/sam3"
@@ -30,24 +31,15 @@ func (s *SAMServerPlug) TorRCClient() string {
 	return `
 ## Conflgure a client by adding these lines to your torrc
 
-UseBridges 1
-Bridge sam ` + s.Keys.Addr().Base64() + `
-
-ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base64() + `
+ClientTransportPlugin sam exec /usr/bin/samclient -destination=` + s.Keys.Addr().Base64() + `
 
 ## OR you can use the base32
 
-UseBridges 1
-Bridge sam ` + s.Keys.Addr().Base32() + `
-
-ClientTransportPlugin sam exec /usr/bin/samclient ` + s.Keys.Addr().Base32() + `
+ClientTransportPlugin sam exec /usr/bin/samclient -destination=` + s.Keys.Addr().Base32() + `
 
 ## OR you can use a readable mnemonic
 
-UseBridges 1
-Bridge sam "` + s.Mnemonic() + " " + strconv.Itoa(len(strings.Replace(s.Keys.Addr().Base32(), ".b32.i2p", "", 1))) + `"
-
-ClientTransportPlugin sam exec /usr/bin/samclient "` + s.Mnemonic() + " " + strconv.Itoa(len(strings.Replace(s.Keys.Addr().Base32(), ".b32.i2p", "", 1))) + `"
+ClientTransportPlugin sam exec /usr/bin/samclient -destination="` + s.Mnemonic() + " " + strconv.Itoa(len(strings.Replace(s.Keys.Addr().Base32(), ".b32.i2p", "", 1))) + `"
 `
 }
 
@@ -82,7 +74,7 @@ func (s *SAMServerPlug) CopyLoop(or net.Conn) {
 
 func (s *SAMServerPlug) Handler(conn net.Conn) error {
 	defer conn.Close()
-	or, err := pt.DialOr(&s.PtInfo, conn.RemoteAddr().String(), "foo")
+	or, err := pt.DialOr(&s.PtInfo, conn.RemoteAddr().String(), "sam")
 	if err != nil {
 		return err
 	}
@@ -94,9 +86,15 @@ func (s *SAMServerPlug) Handler(conn net.Conn) error {
 
 func (s *SAMServerPlug) AcceptLoop(ln net.Listener) error {
 	defer ln.Close()
-	var err error
-	s.Client, err = ln.(*sam3.StreamListener).AcceptI2P()
 	for {
+		acc, err := ln.Accept()
+		if err != nil {
+			return err
+		}
+		s.Client, err = s.Listener.AcceptI2P()
+		if err != nil {
+			return err
+		}
 		if err != nil {
 			if e, ok := err.(net.Error); ok && e.Temporary() {
 				continue
@@ -104,7 +102,7 @@ func (s *SAMServerPlug) AcceptLoop(ln net.Listener) error {
 			pt.Log(pt.LogSeverityError, "accept error: "+err.Error())
 			return err
 		}
-		go s.Handler(s.Client)
+		go s.Handler(acc)
 	}
 	return nil
 }
@@ -120,23 +118,41 @@ func (s *SAMServerPlug) Mnemonic() string {
 }
 
 func (s *SAMServerPlug) Run() error {
+	log.Println("## CONFIGURE samserver CLIENT " + s.TorRCClient())
+	if err := ioutil.WriteFile(
+		s.ClientPath,
+		[]byte(s.TorRCClient()),
+		0644,
+	); err != nil {
+		log.Println("samserver: Couldn't write config to file" + s.ClientPath)
+		return err
+	}
 	var err error
+	s.Session, err = s.sam.NewStreamSession("sam-pt", s.Keys, Options_Short)
+	if err != nil {
+		return err
+	}
+	log.Println("samserver: SAM Session created")
+	s.Listener, err = s.Session.Listen()
+	if err != nil {
+		return err
+	}
+	log.Println("samserver: SAM Listener created")
+	s.PtInfo, err = pt.ServerSetup(nil)
+	if err != nil {
+		return err
+	}
+	log.Println("samserver: SAM Pluggable Transport Configured")
 	for _, bindaddr := range s.PtInfo.Bindaddrs {
 		switch bindaddr.MethodName {
-		case "samserver":
-			s.Listener, err = s.Session.Listen()
+		case "sam":
+			ln, err := net.ListenTCP("tcp", bindaddr.Addr)
 			if err != nil {
 				pt.SmethodError(bindaddr.MethodName, err.Error())
 				break
 			}
-			log.Println(s.TorRCClient())
-			ioutil.WriteFile(
-				s.ClientPath,
-				[]byte(s.TorRCClient()),
-				0644,
-			)
-			go s.AcceptLoop(s.Listener)
-			pt.Smethod(bindaddr.MethodName, s.Listener.Addr())
+			go s.AcceptLoop(ln)
+			pt.Smethod(bindaddr.MethodName, ln.Addr())
 		default:
 			pt.SmethodError(bindaddr.MethodName, "no such method")
 		}

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"net"
+	"flag"
 	"os"
 
 	"git.torproject.org/pluggable-transports/goptlib.git"
@@ -10,32 +10,21 @@ import (
 
 var s *sampts.SAMServerPlug
 
-func Handler(conn net.Conn) error {
-	return s.Handler(conn)
-}
-
-func AcceptLoop(ln net.Listener) error {
-	return s.AcceptLoop(ln)
-}
+var (
+	ClientPath = flag.String("client-config", "sam.torrc", "Create client config examples here")
+	KeysPath   = flag.String("i2p-keys", "sam.torrc.i2pkeys", "Create I2P keys here for storage")
+)
 
 func main() {
 	var err error
-	var KeysPath string
-	var ClientPath string
-	if len(os.Args) > 1 {
-		ClientPath = os.Args[1]
-	}
-	if ClientPath == "" {
-		ClientPath = "sam.torrc"
-	}
-	KeysPath = "sam.torrc.i2pkeys"
-	s, err = sampts.NewSAMServerPlug()
-	s.PtInfo, err = pt.ServerSetup(nil)
+	flag.Parse()
+	s, err = sampts.NewSAMServerPlug(*KeysPath, *ClientPath)
 	if err != nil {
+		pt.Log(pt.LogSeverityError, err.Error())
 		os.Exit(1)
 	}
-	s.KeysPath = KeysPath
-	s.ClientPath = ClientPath
-	s.Run()
-	pt.SmethodsDone()
+	if err := s.Run(); err != nil {
+		panic(err)
+	}
+
 }

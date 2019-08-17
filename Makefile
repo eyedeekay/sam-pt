@@ -12,8 +12,12 @@ samclient:
 samserver:
 	go build -o samserver ./server/cmd
 
+install:
+	install  -m755 samclient /usr/bin/samclient
+	install  -m755 samserver /usr/bin/samserver
+
 clean: fmt
-	rm -f samclient samserver
+	rm -f samclient samserver sam.torrc*
 
 fmt:
 	find . -name '*.go' -exec gofmt -w -s {} \;

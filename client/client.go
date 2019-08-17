@@ -3,6 +3,7 @@ package samptc
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"sync"
 
@@ -78,6 +79,13 @@ func (s *SAMClientPlug) AcceptLoop(ln *pt.SocksListener) error {
 }
 
 func (s *SAMClientPlug) Run() error {
+	var err error
+	log.Println("samclient: dialing server")
+	s.Client, err = s.Session.DialI2P(s.destaddr)
+	if err != nil {
+		return err
+	}
+	log.Println("samclient: dialed address")
 	if s.PtInfo.ProxyURL != nil {
 		// you need to interpret the proxy URL yourself
 		// call pt.ProxyDone instead if it's a type you understand
@@ -86,7 +94,7 @@ func (s *SAMClientPlug) Run() error {
 	}
 	for _, methodName := range s.PtInfo.MethodNames {
 		switch methodName {
-		case "samclient":
+		case "sam":
 			ln, err := pt.ListenSocks("tcp", "127.0.0.1:0")
 			if err != nil {
 				pt.CmethodError(methodName, err.Error())
