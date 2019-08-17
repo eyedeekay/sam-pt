@@ -6,7 +6,10 @@ experimental, only superficially tested, and probably a little dangerous. Please
 avoid this plugin if you are a Tor user seeking anonymity. Snowflake is much
 further along and much more likely to actually help you if you need to defeat
 blocking at this time. If you're a developer, on the other hand, your
-participation is highly appreciated.
+participation is highly appreciated. This is a learning project which might
+have an off-chance of being a supplemental support mechanism for some Tor users
+who are primarily concerned about their access to the Tor network being
+identified and blocked eventually.
 
 At this point, the Server part more-or-less works but I'm still not quite there
 on the Client part.

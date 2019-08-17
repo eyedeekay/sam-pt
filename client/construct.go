@@ -16,7 +16,7 @@ import (
 var Options_Short = []string{"inbound.length=1", "outbound.length=1",
 	"inbound.lengthVariance=0", "outbound.lengthVariance=0",
 	"inbound.backupQuantity=1", "outbound.backupQuantity=1",
-	"inbound.quantity=2", "outbound.quantity=2"}
+	"inbound.quantity=2", "outbound.quantity=2", "i2cp.dontPublishLeaseSet=true"}
 
 func NewSAMClientPlug(Destination, BridgeURL string) (*SAMClientPlug, error) {
 	var s SAMClientPlug
@@ -33,7 +33,7 @@ func NewSAMClientPlug(Destination, BridgeURL string) (*SAMClientPlug, error) {
 		return nil, err
 	}
 	log.Println("samclient: Keys generated")
-	s.Session, err = s.sam.NewStreamSession("sam-pt", s.keys, Options_Short)
+	s.Session, err = s.sam.NewStreamSessionWithSignature("sam-pt", s.keys, Options_Short, sam3.Sig_EdDSA_SHA512_Ed25519)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +81,12 @@ func NewSAMClientPlug(Destination, BridgeURL string) (*SAMClientPlug, error) {
 		}
 		log.Println("samclient: created address")
 	}
+	log.Println("samclient: dialing server")
+	s.Client, err = s.Session.DialI2P(s.destaddr)
+	if err != nil {
+		return nil, err
+	}
+	log.Println("samclient: dialed address")
 	s.PtInfo, err = pt.ClientSetup(nil)
 	if err != nil {
 		return nil, err

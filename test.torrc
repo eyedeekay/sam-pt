@@ -1,8 +1,7 @@
-SocksPort 127.0.0.1:9250
 Log debug stdout
+SocksPort 9150
 
 UseBridges 1
-
 Bridge sam 127.0.0.1:7951
-ClientTransportPlugin sam exec /usr/bin/samclient \
-	-destination=j6h3ebr4tg4odcsj37q65j5qcusq35zjyd6vbaxakw6myo3ea2ma.b32.i2p
+
+ClientTransportPlugin sam exec ./samclient -destination=4axap2riwqsnthqgdw4q3utgdufaixs2awc7kwhivwbfswsmqmbq.b32.i2p

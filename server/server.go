@@ -97,10 +97,6 @@ func (s *SAMServerPlug) AcceptLoop(ln net.Listener) error {
 		if err != nil {
 			return err
 		}
-		s.Client, err = s.Listener.AcceptI2P()
-		if err != nil {
-			return err
-		}
 		if err != nil {
 			if e, ok := err.(net.Error); ok && e.Temporary() {
 				continue
@@ -134,7 +130,7 @@ func (s *SAMServerPlug) Run() error {
 		return err
 	}
 	var err error
-	s.Session, err = s.sam.NewStreamSession("sam-pt", s.Keys, Options_Short)
+	s.Session, err = s.sam.NewStreamSessionWithSignature("sam-pt", s.Keys, Options_Short, sam3.Sig_EdDSA_SHA512_Ed25519)
 	if err != nil {
 		return err
 	}
@@ -145,6 +141,10 @@ func (s *SAMServerPlug) Run() error {
 	}
 	log.Println("samserver: SAM Listener created")
 	s.PtInfo, err = pt.ServerSetup(nil)
+	if err != nil {
+		return err
+	}
+	s.Client, err = s.Listener.AcceptI2P()
 	if err != nil {
 		return err
 	}
