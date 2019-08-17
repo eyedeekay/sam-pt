@@ -18,10 +18,11 @@ var Options_Short = []string{"inbound.length=1", "outbound.length=1",
 	"inbound.backupQuantity=1", "outbound.backupQuantity=1",
 	"inbound.quantity=2", "outbound.quantity=2"}
 
-func NewSAMClientPlug(Destination string) (*SAMClientPlug, error) {
+func NewSAMClientPlug(Destination, BridgeURL string) (*SAMClientPlug, error) {
 	var s SAMClientPlug
 	var err error
 	s.Destination = Destination
+	s.BridgeURL = BridgeURL
 	s.sam, err = sam3.NewSAM("127.0.0.1:7656")
 	if err != nil {
 		return nil, err
@@ -38,6 +39,7 @@ func NewSAMClientPlug(Destination string) (*SAMClientPlug, error) {
 	}
 	log.Println("samclient: Session started")
 	if strings.HasSuffix(s.Destination, ".i2p") {
+		log.Println("samclient: I2P Domain Detected", s.Destination)
 		s.destaddr, err = s.sam.Lookup(s.Destination)
 		if err != nil {
 			return nil, err
