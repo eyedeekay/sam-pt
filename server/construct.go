@@ -13,7 +13,7 @@ import (
 var Options_Short = []string{"inbound.length=1", "outbound.length=1",
 	"inbound.lengthVariance=0", "outbound.lengthVariance=0",
 	"inbound.backupQuantity=1", "outbound.backupQuantity=1",
-	"inbound.quantity=2", "outbound.quantity=2"}
+	"inbound.quantity=2", "outbound.quantity=2", "i2cp.dontPublishLeaseSet=false"}
 
 func NewSAMServerPlug(KeysPath, ClientPath string) (*SAMServerPlug, error) {
 	var s SAMServerPlug
