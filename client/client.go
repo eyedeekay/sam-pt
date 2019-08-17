@@ -20,6 +20,7 @@ type SAMClientPlug struct {
 	Client      *sam3.SAMConn
 	PtInfo      pt.ClientInfo
 	Destination string
+	BridgeURL   string
 }
 
 func (s *SAMClientPlug) NetworkListener() net.Listener {
